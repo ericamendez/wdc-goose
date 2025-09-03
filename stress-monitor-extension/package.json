@@ -1,0 +1,144 @@
+{
+  "name": "stress-monitor",
+  "displayName": "Stress Monitor",
+  "description": "A VS Code extension to monitor coding stress levels using GSR sensors",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "stressMonitor",
+          "name": "Stress Monitor",
+          "when": "true",
+          "icon": "$(pulse)",
+          "visibility": "visible"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "stressMonitor.reportStress",
+        "title": "I'm Stressed!",
+        "icon": "$(warning)"
+      },
+      {
+        "command": "stressMonitor.reportCalm",
+        "title": "I'm Calm",
+        "icon": "$(check)"
+      },
+      {
+        "command": "stressMonitor.clearHistory",
+        "title": "Clear History",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "stressMonitor.startSession",
+        "title": "Start Coding Session",
+        "icon": "$(play)"
+      },
+      {
+        "command": "stressMonitor.endSession",
+        "title": "End Coding Session",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "stressMonitor.openDashboard",
+        "title": "Open Dashboard",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "stressMonitor.triggerDebugRecipe",
+        "title": "Get Debug Help",
+        "icon": "$(debug-alt)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "stressMonitor.startSession",
+          "when": "view == stressMonitor",
+          "group": "navigation@1"
+        },
+        {
+          "command": "stressMonitor.endSession",
+          "when": "view == stressMonitor",
+          "group": "navigation@2"
+        },
+        {
+          "command": "stressMonitor.reportStress",
+          "when": "view == stressMonitor",
+          "group": "navigation@3"
+        },
+        {
+          "command": "stressMonitor.reportCalm",
+          "when": "view == stressMonitor",
+          "group": "navigation@4"
+        },
+        {
+          "command": "stressMonitor.openDashboard",
+          "when": "view == stressMonitor",
+          "group": "navigation@5"
+        },
+        {
+          "command": "stressMonitor.triggerDebugRecipe",
+          "when": "view == stressMonitor",
+          "group": "navigation@6"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "stressMonitor.clearHistory",
+          "when": "view == stressMonitor",
+          "group": "inline"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "stressMonitor.startSession",
+        "key": "ctrl+shift+alt+s",
+        "mac": "cmd+shift+alt+s"
+      },
+      {
+        "command": "stressMonitor.endSession",
+        "key": "ctrl+shift+alt+e",
+        "mac": "cmd+shift+alt+e"
+      },
+      {
+        "command": "stressMonitor.reportStress",
+        "key": "ctrl+shift+alt+x",
+        "mac": "cmd+shift+alt+x"
+      },
+      {
+        "command": "stressMonitor.reportCalm",
+        "key": "ctrl+shift+alt+c",
+        "mac": "cmd+shift+alt+c"
+      },
+      {
+        "command": "stressMonitor.triggerDebugRecipe",
+        "key": "ctrl+shift+alt+d",
+        "mac": "cmd+shift+alt+d"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4"
+  }
+}
