@@ -21,6 +21,9 @@ export class StressMonitor {
     private sessions: CodingSession[] = [];
     private sessionTimeout: NodeJS.Timeout | null = null;
     private readonly SESSION_TIMEOUT_MINUTES = 30; // End session after 30 minutes of inactivity
+    private gooseStatus: 'idle' | 'starting' | 'analyzing' | 'making_changes' | 'completed' | 'error' = 'idle';
+    private gooseStartTime: Date | null = null;
+    private gooseCurrentAction: string = '';
 
     reportStress(): void {
         this.ensureSessionStarted();
@@ -277,5 +280,64 @@ export class StressMonitor {
         
         // Notify about stress level change
         this.notifyStressLevelChange('low');
+    }
+
+    // Goose status management methods
+    setGooseStatus(status: 'idle' | 'starting' | 'analyzing' | 'making_changes' | 'completed' | 'error'): void {
+        this.gooseStatus = status;
+        if (status === 'starting' || status === 'analyzing' || status === 'making_changes') {
+            if (!this.gooseStartTime) {
+                this.gooseStartTime = new Date();
+            }
+        } else if (status === 'idle' || status === 'completed' || status === 'error') {
+            if (status === 'completed') {
+                // Keep the start time to show completion duration
+                // Will be reset on next start
+            } else {
+                this.gooseStartTime = null;
+            }
+        }
+    }
+
+    setGooseAction(action: string): void {
+        this.gooseCurrentAction = action;
+    }
+
+    getGooseStatus(): 'idle' | 'starting' | 'analyzing' | 'making_changes' | 'completed' | 'error' {
+        return this.gooseStatus;
+    }
+
+    getGooseDuration(): number {
+        if (!this.gooseStartTime) {
+            return 0;
+        }
+        return Math.round((new Date().getTime() - this.gooseStartTime.getTime()) / 1000);
+    }
+
+    getGooseStatusText(): string {
+        const duration = this.getGooseDuration();
+        const durationText = duration > 0 ? ` (${duration}s)` : '';
+        
+        switch (this.gooseStatus) {
+            case 'idle':
+                return '💤 Goose is idle';
+            case 'starting':
+                return `🚀 Starting Goose...${durationText}`;
+            case 'analyzing':
+                return `🔍 Goose analyzing code${durationText}`;
+            case 'making_changes':
+                return `⚡ Goose making changes${durationText}`;
+            case 'completed':
+                return `✅ Goose completed (${duration}s total)`;
+            case 'error':
+                return '❌ Goose error';
+            default:
+                return '❓ Unknown status';
+        }
+    }
+
+    getGooseDetailedStatus(): string {
+        const status = this.getGooseStatusText();
+        return this.gooseCurrentAction ? `${status} - ${this.gooseCurrentAction}` : status;
     }
 }

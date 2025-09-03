@@ -21,12 +21,35 @@ export function activate(context: vscode.ExtensionContext) {
         showCollapseAll: true
     });
 
+    // Dynamic refresh system that adjusts interval based on Goose status
+    let refreshInterval: NodeJS.Timeout;
+    let currentRefreshRate = 60000; // Start with slow refresh
+    
+    const refreshUI = () => {
+        stressTreeProvider.refresh();
+        updateStatusBar(statusBarItem, stressMonitor);
+        updateRefreshRate(); // Check if refresh rate needs to change
+    };
+    
+    const updateRefreshRate = () => {
+        const gooseStatus = stressMonitor.getGooseStatus();
+        const newRefreshRate = (gooseStatus !== 'idle' && gooseStatus !== 'completed') ? 2000 : 60000;
+        
+        // Only update interval if rate changed
+        if (newRefreshRate !== currentRefreshRate) {
+            currentRefreshRate = newRefreshRate;
+            clearInterval(refreshInterval);
+            refreshInterval = setInterval(refreshUI, currentRefreshRate);
+            console.log(`Refresh rate changed to ${currentRefreshRate}ms (Goose status: ${gooseStatus})`);
+        }
+    };
+
     // Set up stress level change callback for auto-triggering recipes
     stressMonitor.setStressLevelChangeCallback(async (newLevel, previousLevel) => {
         if (newLevel === 'high') {
             // Automatically trigger Universal Development Assistant without asking
             vscode.window.showInformationMessage('🤖 Stress detected! Auto-activating Universal Development Assistant...');
-            await RecipeExecutor.executeStressDebugRecipe(context);
+            await RecipeExecutor.executeStressDebugRecipe(context, stressMonitor, refreshUI);
         }
     });
 
@@ -95,15 +118,32 @@ export function activate(context: vscode.ExtensionContext) {
         'stressMonitor.triggerDebugRecipe',
         async () => {
             vscode.window.showInformationMessage('🤖 Starting Goose Debug Assistant...');
-            await RecipeExecutor.executeStressDebugRecipe(context);
+            await RecipeExecutor.executeStressDebugRecipe(context, stressMonitor, refreshUI);
         }
     );
 
-    // Auto-refresh the tree view and status bar every minute
-    const refreshInterval = setInterval(() => {
-        stressTreeProvider.refresh();
-        updateStatusBar(statusBarItem, stressMonitor);
-    }, 60000); // 60 seconds
+    const markGooseIdleCommand = vscode.commands.registerCommand(
+        'stressMonitor.markGooseIdle',
+        () => {
+            stressMonitor.setGooseStatus('idle');
+            stressMonitor.setGooseAction('');
+            refreshUI();
+            vscode.window.showInformationMessage('🛌 Goose marked as idle');
+        }
+    );
+
+    const stopGooseCommand = vscode.commands.registerCommand(
+        'stressMonitor.stopGoose',
+        () => {
+            stressMonitor.setGooseStatus('idle');
+            stressMonitor.setGooseAction('');
+            refreshUI();
+            vscode.window.showInformationMessage('🛑 Goose stopped');
+        }
+    );
+
+    // Initial interval setup
+    refreshInterval = setInterval(refreshUI, currentRefreshRate);
 
     context.subscriptions.push(
         treeView,
@@ -115,6 +155,8 @@ export function activate(context: vscode.ExtensionContext) {
         endSessionCommand,
         openDashboardCommand,
         triggerDebugRecipeCommand,
+        markGooseIdleCommand,
+        stopGooseCommand,
         { dispose: () => clearInterval(refreshInterval) }
     );
 }

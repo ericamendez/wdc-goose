@@ -30,6 +30,12 @@ export class StressTreeProvider implements vscode.TreeDataProvider<StressItem> {
                     'current'
                 ),
                 new StressItem(
+                    'Goose Assistant',
+                    this.stressMonitor.getGooseDetailedStatus(),
+                    vscode.TreeItemCollapsibleState.None,
+                    'goose-status'
+                ),
+                new StressItem(
                     'Current Session',
                     currentSession && currentSession.isActive 
                         ? `⏱️ ${currentSessionDuration} minutes` 
@@ -135,6 +141,7 @@ export class StressTreeProvider implements vscode.TreeDataProvider<StressItem> {
             );
         } else if (element.contextValue === 'actions') {
             const currentSession = this.stressMonitor.getCurrentSession();
+            const gooseStatus = this.stressMonitor.getGooseStatus();
             const actions = [
                 new StressItem(
                     '😰 Report Stress',
@@ -164,6 +171,23 @@ export class StressTreeProvider implements vscode.TreeDataProvider<StressItem> {
                     'Begin new coding session',
                     vscode.TreeItemCollapsibleState.None,
                     'action-start-session'
+                ));
+            }
+
+            // Add Goose control actions
+            if (gooseStatus !== 'idle' && gooseStatus !== 'completed') {
+                actions.push(new StressItem(
+                    '🛑 Stop Goose',
+                    'Stop the current Goose assistant',
+                    vscode.TreeItemCollapsibleState.None,
+                    'action-stop-goose'
+                ));
+            } else {
+                actions.push(new StressItem(
+                    '🤖 Trigger Goose',
+                    'Manually start Goose assistant',
+                    vscode.TreeItemCollapsibleState.None,
+                    'action-trigger-goose'
                 ));
             }
 
@@ -234,6 +258,16 @@ export class StressItem extends vscode.TreeItem {
                 command: 'stressMonitor.openDashboard',
                 title: 'Open Dashboard'
             };
+        } else if (contextValue === 'action-stop-goose') {
+            this.command = {
+                command: 'stressMonitor.stopGoose',
+                title: 'Stop Goose'
+            };
+        } else if (contextValue === 'action-trigger-goose') {
+            this.command = {
+                command: 'stressMonitor.triggerDebugRecipe',
+                title: 'Trigger Goose'
+            };
         }
     }
 
@@ -247,6 +281,24 @@ export class StressItem extends vscode.TreeItem {
                     this.iconPath = new vscode.ThemeIcon('info', new vscode.ThemeColor('notificationsWarningIcon.foreground'));
                 } else {
                     this.iconPath = new vscode.ThemeIcon('check', new vscode.ThemeColor('testing.iconPassed'));
+                }
+                break;
+            case 'goose-status':
+                // Color-code Goose status with detailed states
+                if (this.description.includes('idle')) {
+                    this.iconPath = new vscode.ThemeIcon('circle-outline');
+                } else if (this.description.includes('Starting')) {
+                    this.iconPath = new vscode.ThemeIcon('loading', new vscode.ThemeColor('notificationsInfoIcon.foreground'));
+                } else if (this.description.includes('analyzing')) {
+                    this.iconPath = new vscode.ThemeIcon('search', new vscode.ThemeColor('textLink.foreground'));
+                } else if (this.description.includes('making changes')) {
+                    this.iconPath = new vscode.ThemeIcon('edit', new vscode.ThemeColor('testing.iconPassed'));
+                } else if (this.description.includes('completed')) {
+                    this.iconPath = new vscode.ThemeIcon('check-all', new vscode.ThemeColor('testing.iconPassed'));
+                } else if (this.description.includes('error')) {
+                    this.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('errorForeground'));
+                } else {
+                    this.iconPath = new vscode.ThemeIcon('robot');
                 }
                 break;
             case 'current-session':
@@ -285,6 +337,12 @@ export class StressItem extends vscode.TreeItem {
                 break;
             case 'action-dashboard':
                 this.iconPath = new vscode.ThemeIcon('dashboard', new vscode.ThemeColor('textLink.foreground'));
+                break;
+            case 'action-stop-goose':
+                this.iconPath = new vscode.ThemeIcon('stop-circle', new vscode.ThemeColor('errorForeground'));
+                break;
+            case 'action-trigger-goose':
+                this.iconPath = new vscode.ThemeIcon('robot', new vscode.ThemeColor('textLink.foreground'));
                 break;
             case 'entry':
             case 'session-entry':

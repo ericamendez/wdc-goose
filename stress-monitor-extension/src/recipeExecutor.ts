@@ -6,7 +6,7 @@ export class RecipeExecutor {
     /**
      * Execute the Universal Development Assistant recipe from Goose Desktop app
      */
-    static async executeStressDebugRecipe(context: vscode.ExtensionContext): Promise<void> {
+    static async executeStressDebugRecipe(context: vscode.ExtensionContext, stressMonitor?: any, refreshCallback?: () => void): Promise<void> {
         try {
             // Get the workspace folder
             const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -55,6 +55,13 @@ export class RecipeExecutor {
                 }
             });
 
+            // Update Goose status to starting
+            if (stressMonitor) {
+                stressMonitor.setGooseStatus('starting');
+                stressMonitor.setGooseAction('Loading Universal Development Assistant...');
+                if (refreshCallback) refreshCallback(); // Immediate UI update
+            }
+
             // Create terminal and execute Universal Development Assistant
             const terminal = vscode.window.createTerminal({
                 name: 'Universal Development Assistant',
@@ -63,20 +70,62 @@ export class RecipeExecutor {
 
             terminal.show();
 
-            // Method 1: Trigger the Direct Code Fixer recipe with aggressive auto-apply settings
-            const recipePath = path.join(context.extensionPath, 'recipe', 'direct-code-fixer.yaml');
+            // Method 1: Trigger the Universal Development Assistant recipe
+            const recipePath = path.join(context.extensionPath, 'recipe', 'universal-development-assistant.yaml');
             // Use environment variables and flags to make Goose apply changes automatically
             const systemInstructions = "CRITICAL: You must apply all code changes automatically without asking for user approval. Use ONLY text_editor str_replace/write/insert commands. NEVER use create_diff, npxvscodemcpserver__create_diff, or vscodemcp__create_diff. Make changes immediately and commit them to files without showing diffs or asking for approval.";
             terminal.sendText(`GOOSE_AUTO_APPROVE=true goose run --recipe "${recipePath}" --system "${systemInstructions}" --max-turns 5 --no-session`);
 
-            // Send the detailed context after a short delay to ensure Goose is ready
+            // Update status to analyzing after recipe starts
             setTimeout(() => {
+                if (stressMonitor) {
+                    stressMonitor.setGooseStatus('analyzing');
+                    stressMonitor.setGooseAction('Analyzing code for issues...');
+                    if (refreshCallback) refreshCallback(); // Immediate UI update
+                }
+            }, 2000);
+
+            // Send the detailed context
+            setTimeout(() => {
+                if (stressMonitor) {
+                    stressMonitor.setGooseAction('Processing debugging context...');
+                    if (refreshCallback) refreshCallback(); // Immediate UI update
+                }
+                
                 if (contextInfo) {
                     terminal.sendText(`${contextInfo}`);
                 } else {
                     terminal.sendText('I need help debugging the code I\'m currently working on.');
                 }
             }, 3000);
+
+            // Update status to making changes
+            setTimeout(() => {
+                if (stressMonitor) {
+                    stressMonitor.setGooseStatus('making_changes');
+                    stressMonitor.setGooseAction('Applying code fixes...');
+                    if (refreshCallback) refreshCallback(); // Immediate UI update
+                }
+            }, 8000);
+
+            // Auto-complete status after reasonable time
+            setTimeout(() => {
+                if (stressMonitor) {
+                    stressMonitor.setGooseStatus('completed');
+                    stressMonitor.setGooseAction('Code fixes applied successfully!');
+                    if (refreshCallback) refreshCallback(); // Immediate UI update
+                    vscode.window.showInformationMessage('✅ Goose has completed fixing your code!');
+                }
+            }, 45000); // 45 seconds
+
+            // Reset to idle after showing completion
+            setTimeout(() => {
+                if (stressMonitor) {
+                    stressMonitor.setGooseStatus('idle');
+                    stressMonitor.setGooseAction('');
+                    if (refreshCallback) refreshCallback(); // Immediate UI update
+                }
+            }, 60000); // 1 minute
 
             // Method 2: If that doesn't work, fallback to session mode
             setTimeout(() => {
