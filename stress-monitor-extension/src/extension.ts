@@ -23,18 +23,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Set up stress level change callback for auto-triggering recipes
     stressMonitor.setStressLevelChangeCallback(async (newLevel, previousLevel) => {
-        if (newLevel === 'high' && previousLevel !== 'high') {
-            // Show notification with option to get help
-            const action = await vscode.window.showWarningMessage(
-                '🚨 High stress detected! Would you like help debugging?',
-                'Get Help Now',
-                'Maybe Later',
-                'Don\'t Ask Again'
-            );
-            
-            if (action === 'Get Help Now') {
-                await RecipeExecutor.executeStressDebugRecipe(context);
-            }
+        if (newLevel === 'high') {
+            // Automatically trigger Universal Development Assistant without asking
+            vscode.window.showInformationMessage('🤖 Stress detected! Auto-activating Universal Development Assistant...');
+            await RecipeExecutor.executeStressDebugRecipe(context);
         }
     });
 
