@@ -38,7 +38,18 @@ instructions: |
   - Skip the preview/ghost text mode - make actual edits
   - Be confident in your fixes and apply them automatically
 
-prompt: "Automatically analyze the current file user is using in VS Code. Look for syntax errors, incomplete code, missing brackets, and other issues around the cursor position. Immediately fix any problems you find by editing the file directly, without asking permission. Focus on the current line and nearby code. Do not ask what I want help with - just start fixing issues you detect. Do not show diffs or previews - just fix the code immediately."
+prompt: "Automatically analyze the current file user is using in VS Code. Look for syntax errors, incomplete code, missing brackets, and other issues around the cursor position. 
+
+CRITICAL: Use DIRECT file editing commands. Do NOT use create_diff or any tool that shows previews or asks for approval. Use str_replace, write, or insert commands that immediately apply changes to files. Skip all confirmation steps and apply fixes directly.
+
+Immediately fix any problems you find by editing the file directly, without asking permission. Focus on the current line and nearby code. Do not ask what I want help with - just start fixing issues you detect. Do not show diffs or previews - just fix the code immediately and commit the changes.
+
+When making edits:
+- Use text_editor with str_replace command for targeted fixes
+- Use text_editor with write command for complete file rewrites if needed  
+- Use text_editor with insert command for adding missing code
+- Never use create_diff or any approval-based editing tools
+- Apply all changes automatically without user interaction"
 
 activities:
   - coding

@@ -38,8 +38,8 @@ export class RecipeExecutor {
                     contextInfo += `\n\nSELECTED TEXT TO FIX: ${selectedText}`;
                 }
                 
-                // Add specific debugging request
-                contextInfo += `\n\nPLEASE: Analyze this code, identify the issue, and provide a specific fix for line ${currentLine}. Make the actual code changes needed.`;
+                // Add specific debugging request with explicit auto-apply instruction
+                contextInfo += `\n\nPLEASE: Analyze this code, identify the issue, and provide a specific fix for line ${currentLine}. Make the actual code changes needed. IMPORTANT: Apply all changes directly to the file using str_replace or write commands. Do NOT show diffs or ask for approval - just fix the code automatically.`;
             }
 
             // Create signal file for Goose Desktop app to watch
@@ -63,9 +63,11 @@ export class RecipeExecutor {
 
             terminal.show();
 
-            // Method 1: Trigger the Universal Development Assistant recipe from extension directory
-            const recipePath = path.join(context.extensionPath, 'recipe', 'universal-development-assistant.yaml');
-            terminal.sendText(`goose run --recipe "${recipePath}" --max-turns 3`);
+            // Method 1: Trigger the Direct Code Fixer recipe with aggressive auto-apply settings
+            const recipePath = path.join(context.extensionPath, 'recipe', 'direct-code-fixer.yaml');
+            // Use environment variables and flags to make Goose apply changes automatically
+            const systemInstructions = "CRITICAL: You must apply all code changes automatically without asking for user approval. Use ONLY text_editor str_replace/write/insert commands. NEVER use create_diff, npxvscodemcpserver__create_diff, or vscodemcp__create_diff. Make changes immediately and commit them to files without showing diffs or asking for approval.";
+            terminal.sendText(`GOOSE_AUTO_APPROVE=true goose run --recipe "${recipePath}" --system "${systemInstructions}" --max-turns 5 --no-session`);
 
             // Send the detailed context after a short delay to ensure Goose is ready
             setTimeout(() => {
